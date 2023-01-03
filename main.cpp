@@ -7,7 +7,7 @@ using namespace std;
 using namespace cv;
 
 uint32_t g_CodesDetectedTotal=0, g_FrameID=1000;
-string *g_QRCodeContent, *g_QRCodeContentLastTime;
+string *g_QRCodeContent;
 Mat *g_SlidingWindow;
 
 static const double g_ThresholdLadder[]=
@@ -85,14 +85,7 @@ uint PerformDetection(Mat *image, QRCodeDetector *detector, uint32_t window_size
 			*g_QRCodeContent=detector->decode(*g_SlidingWindow, regionPoints);
 			if(!g_QRCodeContent->empty())
 			{
-				if(0==g_QRCodeContent->compare(*g_QRCodeContentLastTime))
-				{
-					return(1);
-				}
-				else
-				{
-					g_QRCodeContentLastTime=g_QRCodeContent;
-				}
+				return(1);
 			}
 		}
 	}
@@ -115,7 +108,6 @@ int main(int argc, char *argv[])
 	QRCodeDetector *QRCDetector=new(QRCodeDetector);
 
 	g_QRCodeContent=new(string);
-	g_QRCodeContentLastTime=new(string);
 
 	String QRcodeSequencePath("./qr_photo/png/img_1000.png");
 
