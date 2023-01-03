@@ -60,7 +60,7 @@ uint PerformDetection(Mat *image, QRCodeDetector *detector, uint32_t window_size
 
 //	vector<int> img_compression_params;
 //	img_compression_params.push_back(IMWRITE_PNG_COMPRESSION);
-//	img_compression_params.push_back(7);
+//	img_compression_params.push_back(9);
 
 	for(wX=0; wX<image->cols-window_size; wX+=step)
 	{
@@ -100,9 +100,8 @@ int main(int argc, char *argv[])
 	g_SlidingWindow=new(Mat);
 
 	Mat *NewFrame=new(Mat);
-	Mat *GrayImage=new(Mat);
 	Mat *ScaledImage=new(Mat);
-	//Mat *CorrectedImage=new(Mat);
+	Mat *GrayImage=new(Mat);
 	Mat *BnWImage=new(Mat);
 
 	QRCodeDetector *QRCDetector=new(QRCodeDetector);
@@ -115,7 +114,7 @@ int main(int argc, char *argv[])
 
 	vector<int> img_compression_params;
 	img_compression_params.push_back(IMWRITE_PNG_COMPRESSION);
-	img_compression_params.push_back(7);
+	img_compression_params.push_back(9);
 
 	if(!QRcodeSequence.isOpened())
     {
@@ -138,15 +137,22 @@ int main(int argc, char *argv[])
         }
 		frame_id_with_leading_zeros = std::string(4-to_string(g_FrameID).length(), '0') + to_string(g_FrameID);
 
-		//make it grayscale, because the color is not important for the QR code reading process
-		cvtColor(*NewFrame, *GrayImage, COLOR_BGR2GRAY);
+		if(NewFrame->size().width>3999 || NewFrame->size().height>3999)
+		{
+			//downscale it reduce amount of work
+			resize(*NewFrame, *ScaledImage, Size(), scale, scale, INTER_LANCZOS4);
+			//make it grayscale, because the color is not important for the QR code reading process
+			cvtColor(*ScaledImage, *GrayImage, COLOR_BGR2GRAY);
+		}
+		else
+		{
+			//make it grayscale, because the color is not important for the QR code reading process
+			cvtColor(*NewFrame, *GrayImage, COLOR_BGR2GRAY);
+		}
+		//imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_gray.png"), *GrayImage, img_compression_params);
 
-		//downscale it reduce amount of work
-		resize(*GrayImage, *ScaledImage, Size(), scale, scale, INTER_LANCZOS4);
-		//imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_gray.png"), *ScaledImage, img_compression_params);
-
-		fprintf(stdout, "Frame %04u : ", g_FrameID);
 		g_QRCodeContent->clear();
+		fprintf(stdout, "Frame %04u : ", g_FrameID);
 		for(threshold_level_id=0; g_ThresholdLadder[threshold_level_id]; threshold_level_id++)
 		{
 			//make it pure black-and-white binary image to drop off all unnecessary information
@@ -160,16 +166,16 @@ int main(int argc, char *argv[])
 				{
 					g_QRCodeContent->pop_back();
 				}
-				//imwrite(string("./detected_codes/")+frame_id_with_leading_zeros+string("_")+*g_QRCodeContent+string(".png"), *g_SlidingWindow, img_compression_params);
 
-				sprintf(cmd_buf, "mv ./qr_photo/png/img_%04u.png ./qr_photo/decoded/%s.png", g_FrameID, g_QRCodeContent->data());
-				if(system(cmd_buf));
+				imwrite(string("./qr_photo/decoded/")+*g_QRCodeContent+string(".png"), *ScaledImage, img_compression_params);
 
 				imshow("QR-Code detected", *g_SlidingWindow);
 				fprintf(stdout, "%s", g_QRCodeContent->data());
+				//save data to file
 				detected_codes=fopen("decoded.csv", "a");
 				fprintf(detected_codes, "%04u;%s\n", g_FrameID, g_QRCodeContent->data());
 				fclose(detected_codes);
+
 				g_CodesDetectedTotal++;
 				break;
 			}
@@ -178,9 +184,11 @@ int main(int argc, char *argv[])
 
 		if(g_QRCodeContent->empty())
 		{
-			sprintf(cmd_buf, "mv ./qr_photo/png/img_%04u.png ./qr_photo/bad/img_%04u.png", g_FrameID, g_FrameID);
-			if(system(cmd_buf));
+			imwrite(string("./qr_photo/bad/img_")+frame_id_with_leading_zeros+string(".png"), *ScaledImage, img_compression_params);
 		}
+
+		sprintf(cmd_buf, "rm -f ./qr_photo/png/img_%04u.png", g_FrameID);
+		if(system(cmd_buf));
 
 		g_FrameID++;
     }
