@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
 	g_SlidingWindow=new(Mat);
 
 	Mat *NewFrame=new(Mat);
-	Mat *ScaledImage=new(Mat);
 	Mat *GrayImage=new(Mat);
 	Mat *BnWImage=new(Mat);
 
@@ -140,15 +139,10 @@ int main(int argc, char *argv[])
 		if(NewFrame->size().width>3999 || NewFrame->size().height>3999)
 		{
 			//downscale it reduce amount of work
-			resize(*NewFrame, *ScaledImage, Size(), scale, scale, INTER_LANCZOS4);
-			//make it grayscale, because the color is not important for the QR code reading process
-			cvtColor(*ScaledImage, *GrayImage, COLOR_BGR2GRAY);
+			resize(*NewFrame, *NewFrame, Size(), scale, scale, INTER_LANCZOS4);
 		}
-		else
-		{
-			//make it grayscale, because the color is not important for the QR code reading process
-			cvtColor(*NewFrame, *GrayImage, COLOR_BGR2GRAY);
-		}
+		//make it grayscale, because the color is not important for the QR code reading process
+		cvtColor(*NewFrame, *GrayImage, COLOR_BGR2GRAY);
 		//imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_gray.png"), *GrayImage, img_compression_params);
 
 		g_QRCodeContent->clear();
@@ -167,7 +161,7 @@ int main(int argc, char *argv[])
 					g_QRCodeContent->pop_back();
 				}
 
-				imwrite(string("./qr_photo/decoded/")+*g_QRCodeContent+string(".png"), *ScaledImage, img_compression_params);
+				imwrite(string("./qr_photo/decoded/")+*g_QRCodeContent+string(".png"), *NewFrame, img_compression_params);
 
 				imshow("QR-Code detected", *g_SlidingWindow);
 				fprintf(stdout, "%s", g_QRCodeContent->data());
@@ -184,7 +178,7 @@ int main(int argc, char *argv[])
 
 		if(g_QRCodeContent->empty())
 		{
-			imwrite(string("./qr_photo/bad/img_")+frame_id_with_leading_zeros+string(".png"), *ScaledImage, img_compression_params);
+			imwrite(string("./qr_photo/bad/img_")+frame_id_with_leading_zeros+string(".png"), *NewFrame, img_compression_params);
 		}
 
 		sprintf(cmd_buf, "rm -f ./qr_photo/png/img_%04u.png", g_FrameID);
