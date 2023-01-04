@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 				fprintf(stdout, "%s", g_QRCodeContent->data());
 				//save data to file
 				detected_codes=fopen("decoded.csv", "a");
-				fprintf(detected_codes, "%04u;%s\n", g_FrameID, g_QRCodeContent->data());
+				fprintf(detected_codes, "%s\n", g_QRCodeContent->data());
 				fclose(detected_codes);
 
 				g_CodesDetectedTotal++;
