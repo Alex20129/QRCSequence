@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 		for(threshold_level_id=0; g_ThresholdLadder[threshold_level_id]; threshold_level_id++)
 		{
 			//make it pure black-and-white binary image to drop off all unnecessary information
-			threshold(*ScaledImage, *BnWImage, g_ThresholdLadder[threshold_level_id], 255, THRESH_BINARY);
+			threshold(*GrayImage, *BnWImage, g_ThresholdLadder[threshold_level_id], 255, THRESH_BINARY);
 			//imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_threshold_")+to_string(threshold_level_id)+string(".png"), *BnWImage, img_compression_params);
 
 			//now we can scan the image using the sliding window technique
