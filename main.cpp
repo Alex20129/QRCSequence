@@ -58,7 +58,7 @@ bool PerformDetection(Mat *image, QRCodeDetector *detector, uint32_t window_size
 
 int main(int argc, char *argv[])
 {
-	uint WindowSize=200, threshold_shift;
+	uint WindowSize=220, threshold_shift;
 	double scale_factor=0.5;
 
 	g_SlidingWindow=new(Mat);
@@ -110,26 +110,26 @@ int main(int argc, char *argv[])
 		imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_contrast.png"), *NewFrame, img_compression_params);
 
 		//make it grayscale, because the color is not important for the QR code reading process
-		cvtColor(*NewFrame, *GrayImage, COLOR_BGR2GRAY);
-		imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_gray.png"), *GrayImage, img_compression_params);
+//		cvtColor(*NewFrame, *GrayImage, COLOR_BGR2GRAY);
+//		imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_gray.png"), *GrayImage, img_compression_params);
 
 		g_QRCodeContent->clear();
 		fprintf(stdout, "Frame %04u : ", g_FrameID);
 		for(threshold_shift=0; threshold_shift<64; threshold_shift++)
 		{
 			//make it pure black-and-white binary image to drop off all unnecessary information
-//			if(threshold_shift%2)
-//			{
-//				threshold(*GrayImage, *BnWImage, 127+threshold_shift, 255, THRESH_BINARY);
-//			}
-//			else
-//			{
-//				threshold(*GrayImage, *BnWImage, 127-threshold_shift, 255, THRESH_BINARY);
-//			}
-//			imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_threshold_")+to_string(threshold_shift)+string(".png"), *BnWImage, img_compression_params);
+			if(threshold_shift%2)
+			{
+				threshold(*NewFrame, *BnWImage, 127+threshold_shift, 255, THRESH_BINARY);
+			}
+			else
+			{
+				threshold(*NewFrame, *BnWImage, 127-threshold_shift, 255, THRESH_BINARY);
+			}
+			imwrite(string("./debug/img_")+frame_id_with_leading_zeros+string("_threshold_")+to_string(threshold_shift)+string(".png"), *BnWImage, img_compression_params);
 
 			//now we can scan the image using the sliding window technique
-			if(PerformDetection(GrayImage, QRCDetector, WindowSize))
+			if(PerformDetection(BnWImage, QRCDetector, WindowSize))
 			{
 				while(g_QRCodeContent->back()==' ' || g_QRCodeContent->back()=='\n' || g_QRCodeContent->back()=='\t')
 				{
